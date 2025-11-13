@@ -1,0 +1,64 @@
+[build-system]
+requires = ["uv_build>=0.9.0"]
+build-backend = "uv_build"
+
+[project]
+name = "jira-cli"
+version = "0.1.0"
+description = "A cross-platform CLI Jira client to manage your issues efficiently from the terminal."
+readme = "README.md"
+requires-python = ">=3.12"
+license = { text = "MIT" }
+authors = [
+    { name = "l0kifs", email = "l0kifs91@gmail.com" }
+]
+maintainers = [
+    { name = "l0kifs", email = "l0kifs91@gmail.com" }
+]
+keywords = [
+    "jira",
+    "cli",
+    "command-line",
+    "issue-tracker",
+    "productivity",
+    "task-manager",
+    "terminal",
+    "developer-tools",
+    "cross-platform"
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Intended Audience :: End Users/Desktop",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Operating System :: Microsoft :: Windows",
+    "Operating System :: MacOS",
+    "Operating System :: POSIX :: Linux",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Office/Business",
+    "Topic :: Utilities",
+    "Topic :: Software Development :: Bug Tracking",
+    "Environment :: Console",
+    "Natural Language :: English",
+]
+dependencies = [
+    "httpx>=0.28.1",
+    "loguru>=0.7.3",
+    "pydantic>=2.12.4",
+    "pydantic-settings>=2.12.0",
+    "rich>=14.2.0",
+    "typer>=0.20.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/l0kifs/jira-cli"
+Documentation = "https://github.com/l0kifs/jira-cli/blob/main/README.md"
+Repository = "https://github.com/l0kifs/jira-cli.git"
+Issues = "https://github.com/l0kifs/jira-cli/issues"
+Changelog = "https://github.com/l0kifs/jira-cli/blob/main/CHANGELOG.md"
+
+[project.scripts]
+jira-cli = "jira_cli.main:run"
