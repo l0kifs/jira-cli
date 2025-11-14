@@ -4,7 +4,10 @@ A lightweight CLI client for Jira Cloud REST API v3. This tool provides a simple
 
 ## Features
 
-- **Authentication**: Simple API token-based authentication
+- **Secure Authentication**: 
+  - Secure credential storage using OS-native keychains (macOS Keychain, Windows Credential Locker, Linux Secret Service)
+  - Simple API token-based authentication
+  - Environment variable support for CI/CD and automation
 - **Issue Management**:
   - Create, get, and update issues
   - Search issues using JQL
@@ -31,7 +34,39 @@ pip install -e .
 
 ## Configuration
 
-Set up your Jira credentials using environment variables or a `.env` file:
+### Secure Credential Storage (Recommended)
+
+The easiest and most secure way to use jira-cli is to store your credentials securely using the system keyring:
+
+```bash
+jira-cli auth login
+```
+
+This will prompt you for your Jira credentials and store them securely in your system's native credential store:
+- **macOS**: Keychain
+- **Windows**: Windows Credential Locker
+- **Linux**: Secret Service (GNOME Keyring, KWallet, etc.)
+
+Your credentials are encrypted by the operating system and never stored in plain text.
+
+**Note**: You can generate an API token from your Atlassian account settings: https://id.atlassian.com/manage-profile/security/api-tokens
+
+#### Managing Credentials
+
+```bash
+# Check authentication status
+jira-cli auth status
+
+# Update credentials
+jira-cli auth update
+
+# Logout (delete stored credentials)
+jira-cli auth logout
+```
+
+### Alternative: Environment Variables
+
+You can also set up credentials using environment variables or a `.env` file:
 
 ```bash
 # Environment variables
@@ -48,14 +83,51 @@ JIRA_CLI__JIRA_EMAIL=your-email@example.com
 JIRA_CLI__JIRA_API_TOKEN=your-api-token
 ```
 
-**Note**: You can generate an API token from your Atlassian account settings: https://id.atlassian.com/manage-profile/security/api-tokens
-
 ## Usage
 
 ### General Help
 
 ```bash
 jira-cli --help
+```
+
+### Authentication Commands
+
+#### Login and store credentials securely
+
+```bash
+# Interactive prompt
+jira-cli auth login
+
+# Or provide credentials directly
+jira-cli auth login --domain your-domain.atlassian.net --email your-email@example.com --api-token your-token
+```
+
+#### Check authentication status
+
+```bash
+jira-cli auth status
+```
+
+#### Update credentials
+
+```bash
+# Interactive update (shows current values)
+jira-cli auth update
+
+# Or update specific fields
+jira-cli auth update --domain new-domain.atlassian.net
+jira-cli auth update --email new-email@example.com
+```
+
+#### Logout (delete credentials)
+
+```bash
+# With confirmation prompt
+jira-cli auth logout
+
+# Skip confirmation
+jira-cli auth logout --force
 ```
 
 ### Project Commands
