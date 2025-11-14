@@ -17,6 +17,14 @@ A lightweight CLI client for Jira Cloud REST API v3. This tool provides a simple
 
 ## Installation
 
+### From PyPI (when published)
+
+```bash
+pip install jira-cli
+```
+
+### From source
+
 ```bash
 pip install -e .
 ```
@@ -209,6 +217,89 @@ jira-cli issue transitions PROJ-123
 # Then transition using the ID
 jira-cli issue transition PROJ-123 31
 ```
+
+## Publishing to PyPI
+
+This project uses [UV](https://docs.astral.sh/uv/) as the package manager and GitHub Actions for automated publishing to PyPI.
+
+### Prerequisites
+
+1. **PyPI Account**: Create an account at [https://pypi.org/](https://pypi.org/)
+2. **Trusted Publishing**: Configure trusted publishing (no API tokens needed!) at [https://pypi.org/manage/account/publishing/](https://pypi.org/manage/account/publishing/)
+   - Add a new publisher with:
+     - PyPI Project Name: `jira-cli`
+     - Owner: `l0kifs`
+     - Repository name: `jira-cli`
+     - Workflow name: `publish-to-pypi.yml`
+     - Environment name: (leave blank)
+
+### Automated Publishing (Recommended)
+
+The project is configured to automatically publish to PyPI when a new GitHub release is created:
+
+1. **Update version** in `pyproject.toml`:
+   ```toml
+   version = "0.2.0"  # Update to your new version
+   ```
+
+2. **Commit and push** your changes:
+   ```bash
+   git add pyproject.toml
+   git commit -m "Bump version to 0.2.0"
+   git push
+   ```
+
+3. **Create a GitHub release**:
+   - Go to [https://github.com/l0kifs/jira-cli/releases/new](https://github.com/l0kifs/jira-cli/releases/new)
+   - Create a new tag (e.g., `v0.2.0`)
+   - Add release title and description
+   - Click "Publish release"
+
+4. **GitHub Actions will automatically**:
+   - Build the package using UV
+   - Publish to PyPI using trusted publishing
+   - You can monitor the progress in the Actions tab
+
+### Manual Publishing
+
+If you need to publish manually:
+
+1. **Install UV** (if not already installed):
+   ```bash
+   pip install uv
+   ```
+
+2. **Build the package**:
+   ```bash
+   uv build
+   ```
+   This creates distribution files in the `dist/` directory.
+
+3. **Publish using UV** (requires PyPI API token):
+   ```bash
+   uv publish
+   ```
+   Or use `twine`:
+   ```bash
+   pip install twine
+   twine upload dist/*
+   ```
+
+### Testing on TestPyPI
+
+Before publishing to the main PyPI, you can test on TestPyPI:
+
+1. Configure trusted publishing for TestPyPI at [https://test.pypi.org/manage/account/publishing/](https://test.pypi.org/manage/account/publishing/)
+
+2. Manually trigger the workflow or modify the workflow to publish to TestPyPI:
+   ```bash
+   uv publish --index-url https://test.pypi.org/legacy/
+   ```
+
+3. Test installation:
+   ```bash
+   pip install --index-url https://test.pypi.org/simple/ jira-cli
+   ```
 
 ## License
 
