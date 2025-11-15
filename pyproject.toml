@@ -64,3 +64,10 @@ Changelog = "https://github.com/l0kifs/jira-cli/blob/main/CHANGELOG.md"
 
 [project.scripts]
 jira-cli = "jira_cli.main:run"
+
+[dependency-groups]
+dev = [
+    "mypy>=1.18.2",
+    "pytest>=9.0.1",
+    "ruff>=0.14.5",
+]

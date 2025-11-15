@@ -16,7 +16,10 @@ A lightweight CLI client for Jira Cloud REST API v3. This tool provides a simple
 - **Status Transitions**: Change issue statuses through workflow transitions
 - **Project Operations**:
   - List all projects
-  - Get project issue fields (create metadata)
+  - Get project create metadata
+- **Field Operations**:
+  - List all fields
+  - Search fields
 
 ## Installation
 
@@ -91,6 +94,14 @@ JIRA_CLI__JIRA_API_TOKEN=your-api-token
 jira-cli --help
 ```
 
+### Version
+
+```bash
+jira-cli version
+```
+
+Show version information
+
 ### Authentication Commands
 
 #### Login and store credentials securely
@@ -130,6 +141,20 @@ jira-cli auth logout
 jira-cli auth logout --force
 ```
 
+### Field Commands
+
+#### List all fields
+
+```bash
+jira-cli field list
+```
+
+#### Search fields
+
+```bash
+jira-cli field search "summary"
+```
+
 ### Project Commands
 
 #### List all projects
@@ -138,11 +163,11 @@ jira-cli auth logout --force
 jira-cli project list
 ```
 
-#### Get project issue fields
+#### Get project create metadata
 
 ```bash
-jira-cli project fields PROJECT_KEY
-jira-cli project fields PROJECT_KEY --issue-type 10001
+jira-cli project create-meta PROJECT_KEY
+jira-cli project create-meta PROJECT_KEY --issue-type 10001
 ```
 
 ### Issue Commands
@@ -249,6 +274,8 @@ This CLI implements the following Jira Cloud REST API v3 endpoints:
 - `POST /rest/api/3/issue/{issueIdOrKey}/transitions` - Transition issue
 - `GET /rest/api/3/issue/{issueIdOrKey}/comment` - Get comments
 - `GET /rest/api/3/issue/{issueIdOrKey}/changelog` - Get changelog
+- `GET /rest/api/3/field` - Get fields
+- `GET /rest/api/3/field/search` - Search fields
 
 ## Examples
 

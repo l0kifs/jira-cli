@@ -1,4 +1,5 @@
 """Issue-related CLI commands"""
+
 import json
 from typing import Optional
 
@@ -11,9 +12,11 @@ app = typer.Typer(help="Issue operations")
 
 @app.command("create")
 def create_issue(
-    fields: str = typer.Option(..., "--fields", "-f", help="JSON string with issue fields"),
+    fields: str = typer.Option(
+        ..., "--fields", "-f", help="JSON string with issue fields"
+    ),
 ) -> None:
-    """Create a new issue. Fields should be JSON like: '{"project":{"key":"PROJ"},"summary":"Title","issuetype":{"name":"Bug"}}'"""
+    """Creates an issue or, where the option to create subtasks is enabled in Jira, a subtask. A transition may be applied, to move the issue or subtask to a workflow step other than the default start step, and issue properties set. Fields should be JSON like: '{"project":{"key":"PROJ"},"summary":"Title","issuetype":{"name":"Bug"}}'"""
     try:
         fields_dict = json.loads(fields)
         with get_client() as client:
@@ -26,10 +29,14 @@ def create_issue(
 @app.command("get")
 def get_issue(
     issue_key: str = typer.Argument(..., help="Issue ID or key (e.g., PROJ-123)"),
-    fields: Optional[str] = typer.Option(None, "--fields", help="Comma-separated list of fields to return"),
-    expand: Optional[str] = typer.Option(None, "--expand", help="Comma-separated list of parameters to expand"),
+    fields: Optional[str] = typer.Option(
+        None, "--fields", help="Comma-separated list of fields to return"
+    ),
+    expand: Optional[str] = typer.Option(
+        None, "--expand", help="Comma-separated list of parameters to expand"
+    ),
 ) -> None:
-    """Get issue details"""
+    """Returns the details for an issue. The issue is identified by its ID or key, however, if the identifier doesn't match an issue, a case-insensitive search and check for moved issues is performed. If a matching issue is found its details are returned, a 302 or other redirect is not returned. The issue key returned in the response is the key of the issue found."""
     try:
         with get_client() as client:
             result = client.get_issue(issue_key, fields=fields, expand=expand)
@@ -41,21 +48,27 @@ def get_issue(
 @app.command("update")
 def update_issue(
     issue_key: str = typer.Argument(..., help="Issue ID or key"),
-    fields: Optional[str] = typer.Option(None, "--fields", "-f", help="JSON string with fields to update"),
-    update: Optional[str] = typer.Option(None, "--update", "-u", help="JSON string with update operations"),
+    fields: Optional[str] = typer.Option(
+        None, "--fields", "-f", help="JSON string with fields to update"
+    ),
+    update: Optional[str] = typer.Option(
+        None, "--update", "-u", help="JSON string with update operations"
+    ),
 ) -> None:
-    """Update an issue. Use --fields for simple updates or --update for complex operations"""
+    """Edits an issue. Issue properties may be updated as part of the edit. Please note that issue transition is not supported and is ignored here. To transition an issue, please use Transition issue. Use --fields for simple updates or --update for complex operations"""
     try:
         fields_dict = json.loads(fields) if fields else None
         update_dict = json.loads(update) if update else None
-        
+
         if not fields_dict and not update_dict:
             typer.echo("Error: Either --fields or --update must be provided")
             raise typer.Exit(1)
-        
+
         with get_client() as client:
-            result = client.update_issue(issue_key, fields=fields_dict, update=update_dict)
-        
+            result = client.update_issue(
+                issue_key, fields=fields_dict, update=update_dict
+            )
+
         if result:
             print_json(result)
         else:
@@ -67,14 +80,20 @@ def update_issue(
 @app.command("search")
 def search_issues(
     jql: str = typer.Argument(..., help="JQL query string"),
-    fields: Optional[str] = typer.Option(None, "--fields", help="Comma-separated list of fields to return"),
+    fields: Optional[str] = typer.Option(
+        None, "--fields", help="Comma-separated list of fields to return"
+    ),
     start_at: int = typer.Option(0, "--start-at", help="Index of first result"),
-    max_results: int = typer.Option(50, "--max-results", help="Maximum number of results"),
+    max_results: int = typer.Option(
+        50, "--max-results", help="Maximum number of results"
+    ),
 ) -> None:
-    """Search for issues using JQL"""
+    """Searches for issues using JQL"""
     try:
         with get_client() as client:
-            result = client.search_issues(jql, fields=fields, start_at=start_at, max_results=max_results)
+            result = client.search_issues(
+                jql, fields=fields, start_at=start_at, max_results=max_results
+            )
         print_json(result)
     except Exception as e:
         handle_error(e)
@@ -84,7 +103,7 @@ def search_issues(
 def get_transitions(
     issue_key: str = typer.Argument(..., help="Issue ID or key"),
 ) -> None:
-    """Get available transitions for an issue"""
+    """Returns either all transitions or a transition that can be performed by the user on an issue, based on the issue's status"""
     try:
         with get_client() as client:
             result = client.get_transitions(issue_key)
@@ -97,15 +116,19 @@ def get_transitions(
 def transition_issue(
     issue_key: str = typer.Argument(..., help="Issue ID or key"),
     transition_id: str = typer.Argument(..., help="Transition ID to perform"),
-    fields: Optional[str] = typer.Option(None, "--fields", "-f", help="JSON string with fields to update"),
+    fields: Optional[str] = typer.Option(
+        None, "--fields", "-f", help="JSON string with fields to update"
+    ),
 ) -> None:
-    """Transition an issue to a new status"""
+    """Performs an issue transition and, if the transition has a screen, updates the fields from the transition screen"""
     try:
         fields_dict = json.loads(fields) if fields else None
-        
+
         with get_client() as client:
-            result = client.transition_issue(issue_key, transition_id, fields=fields_dict)
-        
+            result = client.transition_issue(
+                issue_key, transition_id, fields=fields_dict
+            )
+
         if result:
             print_json(result)
         else:
@@ -118,7 +141,7 @@ def transition_issue(
 def get_comments(
     issue_key: str = typer.Argument(..., help="Issue ID or key"),
 ) -> None:
-    """Get comments for an issue"""
+    """Returns all comments for an issue"""
     try:
         with get_client() as client:
             result = client.get_comments(issue_key)
@@ -131,12 +154,16 @@ def get_comments(
 def get_changelog(
     issue_key: str = typer.Argument(..., help="Issue ID or key"),
     start_at: int = typer.Option(0, "--start-at", help="Index of first result"),
-    max_results: int = typer.Option(100, "--max-results", help="Maximum number of results"),
+    max_results: int = typer.Option(
+        100, "--max-results", help="Maximum number of results"
+    ),
 ) -> None:
-    """Get changelog/history for an issue"""
+    """Returns a paginated list of all changelogs for an issue sorted by date, starting from the oldest"""
     try:
         with get_client() as client:
-            result = client.get_changelog(issue_key, start_at=start_at, max_results=max_results)
+            result = client.get_changelog(
+                issue_key, start_at=start_at, max_results=max_results
+            )
         print_json(result)
     except Exception as e:
         handle_error(e)

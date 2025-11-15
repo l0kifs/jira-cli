@@ -1,8 +1,9 @@
 """Main CLI application"""
+
 import typer
 from rich.console import Console
 
-from jira_cli.commands import auth, issue, project
+from jira_cli.commands import auth, field, issue, project
 
 app = typer.Typer(
     name="jira-cli",
@@ -12,6 +13,7 @@ app = typer.Typer(
 
 # Add command groups
 app.add_typer(auth.app, name="auth")
+app.add_typer(field.app, name="field")
 app.add_typer(issue.app, name="issue")
 app.add_typer(project.app, name="project")
 

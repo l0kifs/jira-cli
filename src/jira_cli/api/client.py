@@ -1,4 +1,5 @@
 """Jira REST API v3 client"""
+
 import base64
 from typing import Any, Optional
 
@@ -12,7 +13,7 @@ class JiraClient:
     def __init__(self, domain: str, email: str, api_token: str):
         """
         Initialize Jira client with authentication credentials.
-        
+
         Args:
             domain: Jira instance domain (e.g., your-domain.atlassian.net)
             email: Email associated with Jira account
@@ -22,18 +23,18 @@ class JiraClient:
         self.base_url = f"https://{self.domain}/rest/api/3"
         self.email = email
         self.api_token = api_token
-        
+
         # Create Basic Auth header
         auth_str = f"{email}:{api_token}"
         auth_bytes = auth_str.encode("utf-8")
         auth_b64 = base64.b64encode(auth_bytes).decode("utf-8")
-        
+
         self.headers = {
             "Authorization": f"Basic {auth_b64}",
             "Content-Type": "application/json",
             "Accept": "application/json",
         }
-        
+
         self.client = httpx.Client(headers=self.headers, timeout=30.0)
         logger.debug(f"Initialized Jira client for {self.base_url}")
 
@@ -48,31 +49,35 @@ class JiraClient:
         self.client.close()
 
     def _request(
-        self, method: str, endpoint: str, params: Optional[dict] = None, json: Optional[dict] = None
-    ) -> dict[str, Any]:
+        self,
+        method: str,
+        endpoint: str,
+        params: Optional[dict[str, Any]] = None,
+        json: Optional[dict] = None,
+    ) -> Any:
         """
         Make HTTP request to Jira API.
-        
+
         Args:
             method: HTTP method (GET, POST, PUT, DELETE)
             endpoint: API endpoint path (e.g., /issue)
             params: Query parameters
             json: JSON body for POST/PUT requests
-            
+
         Returns:
             Response data as dictionary
         """
         url = f"{self.base_url}{endpoint}"
         logger.debug(f"{method} {url}")
-        
+
         try:
             response = self.client.request(method, url, params=params, json=json)
             response.raise_for_status()
-            
+
             # Return empty dict for 204 No Content responses
             if response.status_code == 204:
                 return {}
-            
+
             return response.json()
         except httpx.HTTPStatusError as e:
             logger.error(f"HTTP error: {e.response.status_code} - {e.response.text}")
@@ -85,24 +90,26 @@ class JiraClient:
     def create_issue(self, fields: dict) -> dict:
         """
         Create a new issue.
-        
+
         Args:
             fields: Issue fields as per Jira API
-            
+
         Returns:
             Created issue data
         """
         return self._request("POST", "/issue", json={"fields": fields})
 
-    def get_issue(self, issue_key: str, fields: Optional[str] = None, expand: Optional[str] = None) -> dict:
+    def get_issue(
+        self, issue_key: str, fields: Optional[str] = None, expand: Optional[str] = None
+    ) -> dict:
         """
         Get issue details.
-        
+
         Args:
             issue_key: Issue ID or key (e.g., PROJ-123)
             fields: Comma-separated list of fields to return
             expand: Comma-separated list of parameters to expand
-            
+
         Returns:
             Issue data
         """
@@ -113,15 +120,20 @@ class JiraClient:
             params["expand"] = expand
         return self._request("GET", f"/issue/{issue_key}", params=params)
 
-    def update_issue(self, issue_key: str, fields: Optional[dict] = None, update: Optional[dict] = None) -> dict:
+    def update_issue(
+        self,
+        issue_key: str,
+        fields: Optional[dict] = None,
+        update: Optional[dict] = None,
+    ) -> dict:
         """
         Update an issue.
-        
+
         Args:
             issue_key: Issue ID or key
             fields: Fields to update (simple updates)
             update: Update operations for complex fields
-            
+
         Returns:
             Empty dict on success
         """
@@ -133,16 +145,22 @@ class JiraClient:
         return self._request("PUT", f"/issue/{issue_key}", json=body)
 
     # Search
-    def search_issues(self, jql: str, fields: Optional[str] = None, start_at: int = 0, max_results: int = 50) -> dict:
+    def search_issues(
+        self,
+        jql: str,
+        fields: Optional[str] = None,
+        start_at: int = 0,
+        max_results: int = 50,
+    ) -> dict:
         """
         Search for issues using JQL.
-        
+
         Args:
             jql: JQL query string
             fields: Comma-separated list of fields to return
             start_at: Index of first result to return
             max_results: Maximum number of results
-            
+
         Returns:
             Search results with issues array
         """
@@ -153,56 +171,60 @@ class JiraClient:
         }
         if fields:
             params["fields"] = fields
-        return self._request("GET", "/search", params=params)
+        return self._request("GET", "/search/jql", params=params)
 
     # Projects
     def get_projects(self) -> list[dict]:
         """
         Get all projects visible to user.
-        
+
         Returns:
             List of projects
         """
         return self._request("GET", "/project")
 
-    def get_create_metadata(self, project_key: str, issue_type_id: Optional[str] = None) -> dict:
+    def get_create_metadata(
+        self, project_key: str, issue_type_id: Optional[str] = None
+    ) -> dict:
         """
         Get issue create metadata for a project.
-        
+
         Args:
             project_key: Project key
             issue_type_id: Optional issue type ID
-            
+
         Returns:
             Create metadata including available fields
         """
-        endpoint = f"/issue/createmeta/{project_key}"
+        params = {"projectKeys": project_key}
         if issue_type_id:
-            endpoint += f"/issuetypes/{issue_type_id}"
-        return self._request("GET", endpoint)
+            params["issuetypeIds"] = issue_type_id
+        return self._request("GET", "/issue/createmeta", params=params)
 
     # Transitions
     def get_transitions(self, issue_key: str) -> dict:
         """
         Get available transitions for an issue.
-        
+
         Args:
             issue_key: Issue ID or key
-            
+
         Returns:
             Available transitions
         """
         return self._request("GET", f"/issue/{issue_key}/transitions")
 
-    def transition_issue(self, issue_key: str, transition_id: str, fields: Optional[dict] = None) -> dict:
+    def transition_issue(
+        self, issue_key: str, transition_id: str, fields: Optional[dict] = None
+    ) -> dict:
         """
         Transition an issue to a new status.
-        
+
         Args:
             issue_key: Issue ID or key
             transition_id: ID of the transition to perform
             fields: Optional fields to update during transition
-            
+
         Returns:
             Empty dict on success
         """
@@ -215,25 +237,27 @@ class JiraClient:
     def get_comments(self, issue_key: str) -> dict:
         """
         Get comments for an issue.
-        
+
         Args:
             issue_key: Issue ID or key
-            
+
         Returns:
             Comments data
         """
         return self._request("GET", f"/issue/{issue_key}/comment")
 
     # History/Changelog
-    def get_changelog(self, issue_key: str, start_at: int = 0, max_results: int = 100) -> dict:
+    def get_changelog(
+        self, issue_key: str, start_at: int = 0, max_results: int = 100
+    ) -> dict:
         """
         Get changelog/history for an issue.
-        
+
         Args:
             issue_key: Issue ID or key
             start_at: Index of first result to return
             max_results: Maximum number of results
-            
+
         Returns:
             Changelog data
         """
@@ -242,3 +266,58 @@ class JiraClient:
             "maxResults": max_results,
         }
         return self._request("GET", f"/issue/{issue_key}/changelog", params=params)
+
+    # Fields
+    def get_fields(self) -> list[dict]:
+        """
+        Get all available issue fields.
+
+        Returns:
+            List of field definitions
+        """
+        return self._request("GET", "/field")
+
+    def search_fields(
+        self,
+        query: Optional[str] = None,
+        field_type: Optional[list[str]] = None,
+        field_ids: Optional[list[str]] = None,
+        order_by: Optional[str] = None,
+        expand: Optional[str] = None,
+        project_ids: Optional[list[int]] = None,
+        start_at: int = 0,
+        max_results: int = 50,
+    ) -> dict:
+        """
+        Search for issue fields.
+
+        Args:
+            query: Text to search in field name or description.
+            field_type: List of field types to filter by (e.g., ['custom']).
+            field_ids: List of specific field IDs to include.
+            order_by: Field to sort results by.
+            expand: Fields to expand in the response.
+            project_ids: List of project IDs to filter by.
+            start_at: Index of first result to return.
+            max_results: Maximum number of results.
+
+        Returns:
+            Search results with fields array.
+        """
+        params: dict[str, Any] = {
+            "startAt": start_at,
+            "maxResults": max_results,
+        }
+        if query:
+            params["query"] = query
+        if field_type:
+            params["type"] = field_type
+        if field_ids:
+            params["id"] = field_ids
+        if order_by:
+            params["orderBy"] = order_by
+        if expand:
+            params["expand"] = expand
+        if project_ids:
+            params["projectIds"] = project_ids
+        return self._request("GET", "/field/search", params=params)
