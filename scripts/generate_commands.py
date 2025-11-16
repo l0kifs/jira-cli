@@ -72,6 +72,14 @@ class CommandGenerator:
 
     def sanitize_name(self, name: str) -> str:
         """Convert a name to a valid Python identifier"""
+        # Python reserved keywords that must be avoided
+        reserved_keywords = {
+            "and", "as", "assert", "break", "class", "continue", "def", "del",
+            "elif", "else", "except", "False", "finally", "for", "from", "global",
+            "if", "import", "in", "is", "lambda", "None", "nonlocal", "not", "or",
+            "pass", "raise", "return", "True", "try", "while", "with", "yield"
+        }
+
         # Convert to snake_case
         name = re.sub(r"(?<!^)(?=[A-Z])", "_", name).lower()
         # Remove invalid characters
@@ -81,6 +89,9 @@ class CommandGenerator:
         # Ensure it doesn't start with a number
         if name and name[0].isdigit():
             name = f"_{name}"
+        # Avoid Python reserved keywords by appending underscore
+        if name in reserved_keywords:
+            name = f"{name}_"
         return name
 
     def extract_path_params(self, path: str) -> List[str]:
@@ -276,8 +287,9 @@ def {func_name}(
         """Generate a complete command group file"""
         # Check what imports are needed
         needs_json = any(op.get("requestBody") for op in operations)
+        # Parameters without explicit required=True are optional
         needs_optional = any(
-            p.get("required") is False
+            p.get("required", False) is not True
             for op in operations
             for p in op.get("parameters", [])
         ) or needs_json  # body parameter is always optional
