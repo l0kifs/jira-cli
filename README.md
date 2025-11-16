@@ -20,6 +20,10 @@ A lightweight CLI client for Jira Cloud REST API v3. This tool provides a simple
 - **Field Operations**:
   - List all fields
   - Search fields
+- **OpenAPI Code Generation**:
+  - Generate CLI commands from OpenAPI specification
+  - Interactive selection of API operations to convert
+  - Automated code generation with proper type hints
 
 ## Installation
 
@@ -260,7 +264,63 @@ src/jira_cli/
 └── main.py                # CLI entry point
 ```
 
+## OpenAPI Code Generation
+
+This project includes a powerful code generator that can create CLI commands from the Jira OpenAPI v3 specification.
+
+### Quick Start
+
+```bash
+# List available operations from OpenAPI spec
+uv run python scripts/generate_commands.py list
+
+# Generate commands for a specific category (e.g., Groups)
+uv run python scripts/generate_commands.py generate --tag Groups --no-interactive
+
+# Preview code for a specific operation
+uv run python scripts/generate_commands.py inspect getIssue
+```
+
+### Features
+
+- **Interactive Mode**: Select which API operations to generate
+- **Batch Generation**: Generate entire categories at once
+- **Code Preview**: Inspect generated code before creating files
+- **Type Safety**: Generates proper Python type hints
+- **Auto-Documentation**: Extracts descriptions from OpenAPI spec
+
+### Generated Code Example
+
+```python
+@app.command("get_group")
+def get_group(
+    groupname: Optional[str] = typer.Option(None, "--groupname", help="..."),
+    group_id: Optional[str] = typer.Option(None, "--groupId", help="..."),
+) -> None:
+    """Returns a group. **[Permissions](#permissions) required:..."""
+    try:
+        with get_client() as client:
+            result = client._request(
+                method="GET",
+                endpoint="/rest/api/3/group",
+                params={"groupname": groupname, "groupId": group_id}
+            )
+        print_json(result)
+    except Exception as e:
+        handle_error(e)
+```
+
+### Documentation
+
+- **Comprehensive Guide**: See [scripts/README.md](scripts/README.md) for detailed documentation
+- **Usage Examples**: See [scripts/EXAMPLE_USAGE.md](scripts/EXAMPLE_USAGE.md) for step-by-step examples
+- **OpenAPI Spec**: Available at [docs/jira-openapi-v3.json](docs/jira-openapi-v3.json)
+
+The generator can create commands for 400+ operations across 97 categories from the OpenAPI specification!
+
 ## API Coverage
+
+### Manually Implemented Commands
 
 This CLI implements the following Jira Cloud REST API v3 endpoints:
 
@@ -276,6 +336,10 @@ This CLI implements the following Jira Cloud REST API v3 endpoints:
 - `GET /rest/api/3/issue/{issueIdOrKey}/changelog` - Get changelog
 - `GET /rest/api/3/field` - Get fields
 - `GET /rest/api/3/field/search` - Search fields
+
+### Extended Coverage via Code Generation
+
+Use the OpenAPI code generator to add support for additional endpoints as needed. The generator can create commands for any operation in the OpenAPI specification.
 
 ## Examples
 
