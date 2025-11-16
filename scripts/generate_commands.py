@@ -158,11 +158,15 @@ class CommandGenerator:
                 )
                 type_hint = python_type
             else:
-                param_def = f'typer.Option(None, "--{param_name}", help="{description}")'
+                param_def = (
+                    f'typer.Option(None, "--{param_name}", help="{description}")'
+                )
                 type_hint = f"Optional[{python_type}]"
         else:
             # Header or other parameters
-            param_def = f'typer.Option(None, "--{param_name}", help="{description}")'
+            param_def = (
+                f'typer.Option(None, "--{param_name}", help="{description}")'
+            )
             type_hint = f"Optional[{python_type}]"
 
         return py_param_name, type_hint, param_def
@@ -220,7 +224,6 @@ class CommandGenerator:
         path_param_names = set(self.extract_path_params(operation["path"]))
 
         # Generate parameters
-        params_code = []
         params_def = []
 
         # Add path parameters first (as arguments)
@@ -271,19 +274,30 @@ def {func_name}(
         self, tag: str, operations: List[Dict[str, Any]]
     ) -> str:
         """Generate a complete command group file"""
-        tag_lower = self.sanitize_name(tag)
+        # Check what imports are needed
+        needs_json = any(op.get("requestBody") for op in operations)
+        needs_optional = any(
+            p.get("required") is False
+            for op in operations
+            for p in op.get("parameters", [])
+        ) or needs_json  # body parameter is always optional
 
-        imports = '''"""CLI commands for {tag}"""
+        # Build imports dynamically
+        imports = f'"""CLI commands for {tag}"""\n\n'
 
-import json
-from typing import Optional
+        if needs_json:
+            imports += "import json\n"
 
+        if needs_optional:
+            imports += "from typing import Optional\n"
+
+        imports += """
 import typer
 
 from jira_cli.commands.utils import get_client, handle_error, print_json
 
 app = typer.Typer(help="{tag} operations")
-'''.format(tag=tag)
+""".format(tag=tag)
 
         # Generate all command functions
         commands = []
@@ -423,7 +437,7 @@ def generate_commands(
         grouped = parser.group_operations_by_tag()
 
         console.print(
-            f"\n[bold cyan]OpenAPI CLI Command Generator[/bold cyan]"
+            "\n[bold cyan]OpenAPI CLI Command Generator[/bold cyan]"
         )
         console.print(f"Spec: {spec_path}")
         console.print(
@@ -498,7 +512,7 @@ def generate_commands(
                 code = generator.generate_command_group(tag_name, operations)
                 generator.save_command_group(tag_name, code)
 
-            console.print(f"\n[bold green]✓ Done![/bold green]")
+            console.print("\n[bold green]✓ Done![/bold green]")
 
     except Exception as e:
         console.print(f"[red]Error:[/red] {e}")
@@ -534,7 +548,7 @@ def inspect_operation(
             raise typer.Exit(1)
 
         # Display operation details
-        console.print(f"\n[bold cyan]Operation Details[/bold cyan]\n")
+        console.print("\n[bold cyan]Operation Details[/bold cyan]\n")
         console.print(f"[bold]Operation ID:[/bold] {operation['operationId']}")
         console.print(f"[bold]Method:[/bold] {operation['method']}")
         console.print(f"[bold]Path:[/bold] {operation['path']}")
@@ -542,18 +556,18 @@ def inspect_operation(
         console.print(f"[bold]Tags:[/bold] {', '.join(operation['tags'])}")
 
         if operation.get("parameters"):
-            console.print(f"\n[bold]Parameters:[/bold]")
+            console.print("\n[bold]Parameters:[/bold]")
             for param in operation["parameters"]:
                 console.print(f"  - {param['name']} ({param['in']}): {param.get('description', 'N/A')[:60]}")
 
         if operation.get("requestBody"):
-            console.print(f"\n[bold]Request Body:[/bold] Yes")
+            console.print("\n[bold]Request Body:[/bold] Yes")
 
         # Generate and display code
         generator = CommandGenerator(Path.cwd())
         code = generator.generate_command_code(operation)
 
-        console.print(f"\n[bold cyan]Generated Code Preview[/bold cyan]\n")
+        console.print("\n[bold cyan]Generated Code Preview[/bold cyan]\n")
         console.print(code)
 
     except Exception as e:
